@@ -52,6 +52,8 @@ docker compose up -d --force-recreate model
 完成。C#、Vue、MAUI 完全不動。
 ```
 
+`MODEL_VERSION` 命名為 `<資料集>-<規模>-v<序號>`（如 `ppe-2114-v1`），與 `runs/` 的實驗名、`weights/` 的檔名一致。
+
 之所以能這樣，是第一階段的架構決定：類別清單由 `/labels` 端點提供、每筆紀錄存 `ModelVersion`、模型參數在設定檔、推論服務是獨立容器。
 
 **訓練不需要專案系統跑；驗證需要。** 見[實作順序](#實作順序)第 ① 步。
@@ -96,7 +98,6 @@ docker compose up -d --force-recreate model
 **後三項需要 vision-detect**（`docker compose up -d`）
 
 與第一階段「先用 COCO 打通鏈路」是同一個邏輯：**先讓最不確定的部分變確定。**
-
 
 ---
 
@@ -204,6 +205,7 @@ vision-detect-ml/
 ├── runs/                   訓練輸出（不進版控）
 ├── weights/                挑選後的權重
 ├── reports/                評估報告與圖表
+└── docs/                   規劃與圖表
 ```
 
 `runs/` 是每次訓練的暫存輸出，`weights/` 是**刻意挑出來**要交付的那一個。兩者分開，之後才知道容器裡跑的是哪一次訓練。
