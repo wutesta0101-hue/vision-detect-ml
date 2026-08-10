@@ -9,7 +9,6 @@
 逐框查證後發現資料集的標註缺失是壓低 precision 的主因，而非模型能力——  
 詳見[評估報告](reports/ppe-2114-評估報告.md)。
 
-**狀態：可行性驗證中。**
 
 ---
 
@@ -32,17 +31,15 @@
 
 ## 專案目的
 
-第一階段用 COCO 預訓練模型把系統跑通了。這個 repo 是下一步：**fine-tune 一個領域模型，並且能說清楚它好在哪、壞在哪。**
+第一階段用 COCO 預訓練模型把系統跑通了。這個 repo 是下一步：fine-tune 一個領域模型，並且能說清楚它好在哪、壞在哪。
 
-多數 YOLO 專案的 README 只寫「用了 YOLO，效果不錯」。這裡要練的是後面那半 —— 分類別 mAP、混淆矩陣、部署閾值下的實際計數、逐框失敗分析，讓專案可以用數字說話。
+多數 YOLO 專案的 README 只寫「用了 YOLO，效果不錯」。這裡要練的是後面那半——分類別 mAP、混淆矩陣、部署閾值下的實際計數、逐框失敗分析，讓專案可以用數字說話。
 
 **訓練以懂評估為目的。**
 
 ---
 
 ## 與 vision-detect 的關係
-
-![交付邊界](docs/delivery-boundary(zh).png)
 
 兩個 repo 之間只有一條線：訓練完的權重複製過去，改兩個環境變數，重啟一個容器。
 
@@ -90,23 +87,23 @@ docker compose up -d --force-recreate model
 
 用 100 張的小資料集走完整輪。**目的不是得到好模型**，是確認環境與流程沒問題。
 
-- [ ] CUDA 環境正常（`torch.cuda.is_available()` 為 True）
-- [ ] Roboflow 匯出的 YOLO 格式能被 Ultralytics 直接讀取
-- [ ] `data.yaml` 的路徑設定正確
-- [ ] 訓練能在 GPU 上跑起來，VRAM 沒爆
-- [ ] 匯出的權重能塞進 `model-service` 容器
-- [ ] 換模型後 API 回傳的 `model_version` 與 `/labels` 正確更新
-- [ ] 桌機儀表板的類別篩選顯示新的類別清單
+- [x] CUDA 環境正常（`torch.cuda.is_available()` 為 True）
+- [x] Roboflow 匯出的 YOLO 格式能被 Ultralytics 直接讀取
+- [x] `data.yaml` 的路徑設定正確
+- [x] 訓練能在 GPU 上跑起來，VRAM 沒爆
+- [x] 匯出的權重能塞進 `model-service` 容器
+- [x] 換模型後 API 回傳的 `model_version` 與 `/labels` 正確更新
+- [x] 桌機儀表板的類別篩選顯示新的類別清單
 
 **後三項需要 vision-detect**（`docker compose up -d`）
 
 與第一階段「先用 COCO 打通鏈路」是同一個邏輯：**先讓最不確定的部分變確定。**
 
+第 ⑤ 項在驗證時發現 vision-detect 的 `docker-compose.yml` 缺少 volume 掛載與 `MODEL_WEIGHTS` 環境變數，「換模型不需重建映像」原本不成立——已修補，過程見[可行性驗證報告](reports/smoke-report.md)。
+
 ---
 
 ## 訓練流程
-
-![訓練流程](docs/training-flow(zh).png)
 
 虛線是回頭的路。**ML 流程不是直線**——評估發現某類別 mAP 低就回去調參，失敗分析發現標註品質差就回去修資料。
 
@@ -115,8 +112,9 @@ docker compose up -d --force-recreate model
 | `check_env.py` | CUDA / VRAM / 版本檢查 |
 | `dataset_stats.py` | 類別分布、每圖物件數、框大小 |
 | `train.py` | fine-tune |
-| `evaluate.py` | mAP、PR 曲線、混淆矩陣 |
-| `error_analysis.py` | 最差 20 張的共同特徵 |
+| `evaluate.py` | mAP、部署閾值計數、混淆矩陣 |
+| `error_analysis.py` | 最差 N 張的錯誤標記與逐框查證 |
+| `compare_runs.py` | 跨實驗對照（訓練曲線、分類別漏檢數） |
 | `export_to_service.py` | 挑權重、印出要改的環境變數 |
 | `figstyle.py` | 圖表配色（與 Mermaid 流程圖共用前五色） |
 
@@ -127,7 +125,7 @@ docker compose up -d --force-recreate model
 | 項目 | 內容 |
 |---|---|
 | OS | Windows 11 / PowerShell 5.1 |
-| GPU | RTX 3080 Ti 12 GB |
+| GPU | RTX 3080 12 GB |
 | Python | 3.12 |
 
 ```powershell
@@ -139,10 +137,14 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe check_env.py
 ```
 
+Roboflow 匯出的 `data.yaml` 用相對路徑（`../train/images`），從 repo 根目錄執行會解析錯誤。  
+改為絕對路徑：
+
 ```yaml
-path: C:/dev/vision-detect-ml/datasets/hardhat-sample-100
+path: C:/dev/PR_vision-detect-ml/vision-detect-ml/datasets/ppe-2114
 train: train/images
 val: valid/images
+test: test/images
 ```
 
 正斜線——反斜線在 YAML 裡會被當跳脫字元。
@@ -173,12 +175,13 @@ val: valid/images
 |---|---|
 | 資料集統計 | 類別分布、每張圖平均物件數、框大小分布 |
 | mAP@50 / mAP@50-95 | 整體與各類別 |
-| 部署閾值下的 TP/FP/FN | conf=0.25，與 model-service 設定一致，可跨實驗比較 |
+| 部署閾值下的 TP/FP/FN | conf=0.25，與 `model-service` 設定一致，可跨實驗比較 |
 | 混淆矩陣 | 模型把什麼誤認成什麼 |
 | 失敗案例分析 | 產出最差 20 張；報告逐框查證其中 2 張 |
+| 對照實驗 | imgsz 640 vs 960，含證偽條件與訓練成本 |
 | 換模型前後對照 | 附上實際的操作成本 |
 
-其他報告：[可行性驗證](reports/smoke-report.md)（100 張走完整輪，發現並修補 `vision-detect` 的換模型缺口）。
+其他報告：[可行性驗證](reports/smoke-report.md)（100 張走完整輪，發現並修補 vision-detect 的換模型缺口）。
 
 ---
 
@@ -202,8 +205,9 @@ vision-detect-ml/
 ├── check_env.py          環境檢查
 ├── dataset_stats.py      資料集統計
 ├── train.py              fine-tune
-├── evaluate.py           mAP · PR 曲線 · 混淆矩陣
+├── evaluate.py           mAP · 部署閾值 · 混淆矩陣
 ├── error_analysis.py     失敗分析
+├── compare_runs.py       跨實驗對照
 ├── export_to_service.py  權重交付
 ├── figstyle.py           圖表配色
 ├── configs/              訓練設定 YAML
@@ -225,7 +229,8 @@ vision-detect-ml/
 | 只在本機訓練 | 不用雲端 GPU，訓練腳本、權重、報告在同一台機器——「換模型只需替換一個檔案」才站得住 |
 | 沿用 YOLOv8 架構 | RF-DETR 等較新架構可能更好，但現有流程尚未走順，換架構會引入新的不確定性 |
 | 沒有自動化測試 | 訓練腳本的正確性靠評估結果驗證，不靠單元測試 |
-| 訓練環境與推論環境分離 | `ml/.venv` 是 CUDA 版，推論服務維持 CPU 版——容器裡沒有 GPU |
+| 訓練環境與推論環境分離 | 本 repo 的 `.venv` 是 CUDA 版，`model-service` 維持 CPU 版——容器裡沒有 GPU |
+| 未量化標註缺失的規模 | 僅逐框查證 2 張影像，未統計 213 張 test 集的比例——見評估報告第八節 |
 
 ---
 

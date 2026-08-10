@@ -16,7 +16,7 @@ import yaml
 import figstyle
 
 ROOT = Path(__file__).parent.resolve()
-IOU_THR = 0.5          # 與 mAP@50 一致，判定「這個預測有對上哪個標註」
+IOU_THR = 0.45         # 與 Ultralytics ConfusionMatrix 的預設一致，便於與部署表對照
 CONF_THR = 0.25        # 與 model-service 的 CONFIDENCE_THRESHOLD 一致
 
 
