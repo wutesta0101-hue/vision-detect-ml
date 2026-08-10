@@ -49,8 +49,17 @@ def apply(base_size=8):
 
 
 def title(ax, main, sub=None, size=9):
-    # 主標題短而粗，副說明另起一行降階為 MUT —— 避免兩層資訊擠在同一行
-    ax.set_title(main, fontsize=size, weight='bold', loc='left', pad=10 if sub else 4)
+    # 主標題短而粗，副說明另起一行降階為 MUT
+    #
+    # pad 與副標位置都要跟著字級走。原本 pad 用固定點數、副標用軸高比例，
+    # 兩種單位混用時，圖一矮就會擠在一起 —— 這是所有圖表共通的問題。
     if sub:
-        ax.text(0.0, 1.015, sub, transform=ax.transAxes,
+        ax.set_title(main, fontsize=size, weight='bold', loc='left',
+                     pad=size * 2.4)
+        # 用 offset transform 以點為單位定位，與 pad 同單位，不受圖高影響
+        from matplotlib.transforms import ScaledTranslation
+        off = ScaledTranslation(0, size * 0.55 / 72, ax.figure.dpi_scale_trans)
+        ax.text(0.0, 1.0, sub, transform=ax.transAxes + off,
                 fontsize=size - 1.5, color=MUT, va='bottom')
+    else:
+        ax.set_title(main, fontsize=size, weight='bold', loc='left', pad=4)

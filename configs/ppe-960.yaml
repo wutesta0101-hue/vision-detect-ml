@@ -1,0 +1,24 @@
+# imgsz 對照實驗 —— 驗證 Gloves 的漏檢是否來自解析度不足
+#
+# 假設：Gloves 框小（P10 相對面積 0.0035），640 下約 30-40 像素，
+#       解析度不足導致漏檢 21 個（test 集六類最多之一）。
+#       提高到 960 後 Gloves 的 recall 應明顯改善，
+#       大物件（Person、Vest）幾乎不變。
+#
+# 證偽條件：若六類都改善或都不改善，假設不成立。
+# 與 ppe.yaml 只差 imgsz 與 name，其餘完全相同。
+
+model: yolov8s.pt
+data: datasets/ppe-2114/data.yaml
+name: ppe-2114-v2-960
+
+epochs: 100
+imgsz: 960               # ← 唯一的變因（v1 為 640）
+batch: 16
+device: 0
+workers: 8
+
+patience: 20
+seed: 0
+plots: true
+val: true

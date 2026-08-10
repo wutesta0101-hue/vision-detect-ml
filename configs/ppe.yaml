@@ -1,0 +1,18 @@
+# 正式訓練設定 —— PPE Detection 2,114 張 / 6 類
+# 這是第一次正式訓練，目的是建立基準，不是追求最佳成績。
+# 先跑完一輪拿到數字，再決定要調什麼 —— 沒有基準的調參是瞎調。
+
+model: yolov8s.pt        # 比驗證用的 n 大一階；12 GB VRAM 下很寬鬆
+data: datasets/ppe-2114/data.yaml
+name: ppe-2114-v1        # 與 weights/ 檔名、MODEL_VERSION 一致
+
+epochs: 100              # 1476 張需要足夠輪次；patience 會提早停
+imgsz: 640               # Ultralytics 預設。先建立基準，不預先調高
+batch: 16                # 保守值。改 -1 可自動偵測 VRAM
+device: 0
+workers: 8               # 雙路 CPU 有 NUMA 議題，不要開到 44
+
+patience: 20             # 連續 20 輪 val 沒進步就停（預設 100，等於幾乎不停）
+seed: 0                  # 固定隨機種子，重跑結果可比較
+plots: true
+val: true

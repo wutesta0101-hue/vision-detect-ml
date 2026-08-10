@@ -232,3 +232,9 @@ vision-detect-ml/
 - 商業使用需向 Ultralytics 取得 Enterprise License
 
 若之後要商業化，替代方案是換用授權較寬鬆的偵測模型 —— 在 vision-detect 的架構下改動成本很低（推論服務是獨立容器）。
+
+### 資料集
+
+資料集不隨 repo 散布（`datasets/` 不進版控），各自授權見 [`docs/SOURCES.md`](docs/SOURCES.md)。
+
+PPE Detection 採 **CC BY 4.0，要求署名** —— 評估報告與任何使用該資料集的產出都需標註來源。

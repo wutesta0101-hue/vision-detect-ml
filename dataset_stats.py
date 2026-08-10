@@ -36,6 +36,20 @@ def label_dir(root, images_rel):
     return Path(str(p).replace('images', 'labels'))
 
 
+def box_size(vals):
+    # 從一行標註的數值取出框的寬高。支援兩種格式：
+    #   偵測格式 4 個值：cx cy w h            → 直接取 w h
+    #   分割格式 6+ 偶數個：x1 y1 x2 y2 ...   → 取多邊形的外接框
+    # Roboflow 在原始標註是多邊形時會匯出後者，Ultralytics 訓練偵測模型時
+    # 會自己轉成外接框，所以統計也用同樣的方式才對得起來
+    if len(vals) == 4:
+        return vals[2], vals[3]
+    if len(vals) >= 6 and len(vals) % 2 == 0:
+        xs, ys = vals[0::2], vals[1::2]
+        return max(xs) - min(xs), max(ys) - min(ys)
+    return None
+
+
 def scan(dir_path):
     # 掃一個 split 的所有標註檔，回傳 (每類框數, 每張圖框數, 每個框的相對面積, 空標註數)
     counts, per_image, areas, empty = Counter(), [], [], 0
@@ -44,9 +58,11 @@ def scan(dir_path):
         if not lines:
             empty += 1
         per_image.append(len(lines))
-        for c, _, _, w, h in lines:
-            counts[int(c)] += 1
-            areas.append(float(w) * float(h))
+        for parts in lines:
+            counts[int(parts[0])] += 1
+            wh = box_size([float(v) for v in parts[1:]])
+            if wh:
+                areas.append(wh[0] * wh[1])
     return counts, per_image, areas, empty
 
 
