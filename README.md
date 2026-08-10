@@ -5,6 +5,10 @@
 產出的權重部署到 [vision-detect](https://github.com/wutesta0101-hue/vision-detect) 的推論服務，
 介面是**一個 `.pt` 檔加兩個環境變數**。本 repo 不依賴該專案的程式碼。
 
+用 Ultralytics YOLOv8s 在 2,114 張 PPE 資料集上做 fine-tune，**自行實作評估與失敗分析工具**。
+逐框查證後發現資料集的標註缺失是壓低 precision 的主因，而非模型能力 ——
+詳見[評估報告](reports/ppe-2114-評估報告.md)。
+
 **狀態：可行性驗證中。**
 
 ---
@@ -188,9 +192,12 @@ val: valid/images
 
 | 用途 | 技術 |
 |---|---|
-| 訓練 | PyTorch (CUDA) · Ultralytics YOLO |
-| 評估 | matplotlib · scikit-learn |
+| 訓練 | Ultralytics YOLOv8（PyTorch CUDA） |
+| 評估 | 自行實作（numpy · matplotlib） |
 | 資料集 | Roboflow Universe |
+
+> 原規劃列有 scikit-learn，實作後未使用 —— 偵測任務的 IoU 配對與 mAP 不在其涵蓋範圍，
+> 而 Ultralytics 已提供官方定義的指標。剩餘的統計用 numpy 即可。
 
 ---
 
