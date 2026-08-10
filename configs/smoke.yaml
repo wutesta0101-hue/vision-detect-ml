@@ -1,0 +1,16 @@
+# 可行性驗證用設定 —— 目的是走完流程，不是得到好模型
+# 100 張資料集，預期 mAP 很低，person 類別可能為 0（test 集裡完全沒有該類別）
+
+model: yolov8n.pt        # 最小的模型，驗證流程用；正式練習改 yolov8s
+data: datasets/hardhat-sample-100/data.yaml
+name: hardhat-100-v1     # 與 weights/ 檔名、MODEL_VERSION 保持一致
+
+epochs: 20               # 驗證流程足夠；70 張訓練集再多也只是過擬合
+imgsz: 640               # Ultralytics 預設值
+batch: 16                # 12 GB VRAM 下 yolov8n 很寬鬆；改 -1 可自動偵測
+device: 0                # 指定 GPU。設成 cpu 可比較差異
+workers: 8               # 雙路 CPU 有 NUMA 議題，不要開到 44
+
+seed: 0                  # 固定隨機種子，重跑結果可比較
+plots: true              # 產生訓練曲線與混淆矩陣到 runs/
+val: true

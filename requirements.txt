@@ -1,0 +1,8 @@
+# torch / torchvision 刻意不列在這裡。
+# 它們必須走 CUDA index 安裝，寫進來會被 PyPI 的 CPU 版滿足：
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+# 安裝順序：先裝 torch，再跑 pip install -r requirements.txt
+
+ultralytics
+matplotlib
+pyyaml
