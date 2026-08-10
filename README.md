@@ -77,9 +77,9 @@ docker compose up -d --force-recreate model
 
 | 順序 | 主題 | 估計 | 狀態 |
 |---|---|---|---|
-| ① | 可行性驗證（100 張，走完整輪） | 2–4 小時 | 進行中 |
-| ② | fine-tune 練習（2,114 張 PPE） | 15–25 小時 | |
-| ③ | 評估報告 | 15–20 小時 | |
+| ① | 可行性驗證（100 張，走完整輪） | 2–4 小時 | 完成 |
+| ② | fine-tune 練習（2,114 張 PPE） | 15–25 小時 | 完成 |
+| ③ | 評估報告 | 15–20 小時 | 完成 |
 | ④ | PyTorch 基礎（觸發式，讀懂訓練曲線） | 3–5 小時 | |
 | ⑤ | 大規模資料處理 | 另行規劃 | |
 
@@ -166,6 +166,8 @@ val: valid/images
 
 ## 評估報告
 
+**[PPE 偵測模型評估報告](reports/ppe-2114-評估報告.md)** —— test mAP@50 0.866，
+含資料集分析、失敗案例逐框查證、以及一次解析度對照實驗（假設被證偽）。
 
 | 產出 | 說明 |
 |---|---|
@@ -175,6 +177,9 @@ val: valid/images
 | 混淆矩陣 | 模型把什麼誤認成什麼 |
 | 失敗案例分析 | 最差的 20 張，看共同特徵 |
 | 換模型前後對照 | 附上實際的操作成本 |
+
+其他報告：[可行性驗證](reports/smoke-report.md)（100 張走完整輪，發現並修補
+`vision-detect` 的換模型缺口）。
 
 
 ---
@@ -237,4 +242,10 @@ vision-detect-ml/
 
 資料集不隨 repo 散布（`datasets/` 不進版控），各自授權見 [`docs/SOURCES.md`](docs/SOURCES.md)。
 
-PPE Detection 採 **CC BY 4.0，要求署名** —— 評估報告與任何使用該資料集的產出都需標註來源。
+| 資料集 | 授權 | 署名 |
+|---|---|---|
+| Hard Hat Sample | Public Domain (CC0) | 不要求 |
+| **PPE Detection** | **CC BY 4.0** | **要求** |
+
+PPE Detection 由 **SDP** 發布於 [Roboflow Universe](https://universe.roboflow.com/sdp-lfigk/ppe-detection-ozhfb)，
+採 CC BY 4.0 授權。評估報告與任何使用該資料集的產出都需標註來源。
