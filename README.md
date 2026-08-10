@@ -41,6 +41,9 @@
 
 ## 與 vision-detect 的關係
 
+![交付邊界](docs/delivery-boundary(zh).png)
+
+
 兩個 repo 之間只有一條線：訓練完的權重複製過去，改兩個環境變數，重啟一個容器。
 
 ```
@@ -104,6 +107,9 @@ docker compose up -d --force-recreate model
 ---
 
 ## 訓練流程
+
+![訓練流程](docs/training-flow(zh).png)
+
 
 虛線是回頭的路。**ML 流程不是直線**——評估發現某類別 mAP 低就回去調參，失敗分析發現標註品質差就回去修資料。
 
